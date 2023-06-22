@@ -1,6 +1,7 @@
 import pygame
 from math import *
 import heapq
+import itertools
 
 pygame.init()
 screen = pygame.display.set_mode((600, 600))
@@ -33,6 +34,29 @@ def dijkstra(adj_matrix, start, finish):
                     prev[v] = u
                     heapq.heappush(heap, (dist[v], v))
     return None
+
+# make sure gates are not repeated!!!
+def path_gates(adj_matrix, start, finish, gates):
+    if gates == []:
+        return dijkstra(adj_matrix, start, finish)
+
+    best = []
+    perms = list(itertools.permutations(gates))
+
+    for perm in perms:
+        path = []
+        path += dijkstra(adj_matrix, start, perm[0])
+        del path[-1]
+        for i in range(len(perm)-1):
+            path += dijkstra(adj_matrix, perm[i], perm[i+1])
+            del path[-1]
+        path += dijkstra(adj_matrix, perm[-1], finish)
+
+        if best == [] or pathlen(adj_matrix, path) < pathlen(adj_matrix, best):
+            best = path
+
+    return best
+
 
 def pathlen(adj_matrix, path):
     l = 0
@@ -81,9 +105,10 @@ adj_matrix = [
 ]
 
 start = 11
-finish = 28
+finish = 9
+gates = [20, 25]
 
-shortest_path = dijkstra(adj_matrix, start, finish)
+shortest_path = path_gates(adj_matrix, start, finish, gates)
 print(f"The shortest path from node {start} to node {finish} is {shortest_path} with len {pathlen(adj_matrix, shortest_path)}")
 
 black = (0, 0, 0)
@@ -91,7 +116,8 @@ white = (255, 255, 255)
 red = (255, 0, 0)
 green = (0, 255, 0)
 blue = (3, 127, 252)
-path = blue # path line color
+yellow = (255, 255, 0)
+path = yellow # path line color
 pc = { # path colors
     'tlc1': white,
     'tlc2': white,
@@ -222,8 +248,12 @@ while True:
                 if (mx-nc[i][0])**2 + (my-nc[i][1])**2 <= 300:
                     if event.button == 1: start = i
                     if event.button == 3: finish = i
+                    if event.button == 2:
+                        if i in gates: gates.remove(i)
+                        else: gates.append(i)
                     pc = {key:white for key in pc}
-                    shortest_path = dijkstra(adj_matrix, start, finish)
+                    #shortest_path = dijkstra(adj_matrix, start, finish)
+                    shortest_path = path_gates(adj_matrix, start, finish, gates)
                     screen.fill(black)
 
 
@@ -289,9 +319,11 @@ while True:
         pygame.draw.line(screen, pc['rl1'], (500,200), (500,300), 3)
         pygame.draw.line(screen, pc['rl2'], (500,300), (500,400), 3)
     
-    # draw start and finish nodes
+    # draw start and finish nodes and gates
     pygame.draw.rect(screen, green, (nc[start][0]-5,nc[start][1]-5,10,10))
     pygame.draw.rect(screen, red, (nc[finish][0]-5,nc[finish][1]-5,10,10))
+    for i in gates:
+        pygame.draw.rect(screen, blue, (nc[i][0]-5,nc[i][1]-5,10,10))
 
     font = pygame.font.Font(None, 36)
     text_surface = font.render(f"Length: {pathlen(adj_matrix, shortest_path)}", True, (255, 255, 255))
