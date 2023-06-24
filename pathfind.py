@@ -255,6 +255,7 @@ while True:
                     #shortest_path = dijkstra(adj_matrix, start, finish)
                     shortest_path = path_gates(adj_matrix, start, finish, gates)
                     screen.fill(black)
+                    print(f"The shortest path from node {start} to node {finish} is {shortest_path} with len {pathlen(adj_matrix, shortest_path)}")
 
 
     if pygame.key.get_pressed()[pygame.K_ESCAPE]:
