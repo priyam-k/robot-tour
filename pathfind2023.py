@@ -56,15 +56,24 @@ def block(vb, hb):
             if vb[i][j] == 1:
                 adj_matrix[i*4+j][i*4+j+1] = 0
                 adj_matrix[i*4+j+1][i*4+j] = 0
+            else:
+                adj_matrix[i*4+j][i*4+j+1] = 1
+                adj_matrix[i*4+j+1][i*4+j] = 1
 
     for i in range(len(hb)):
         for j in range(len(hb[i])):
             if hb[i][j] == 1:
                 adj_matrix[i*4+j][i*4+j+4] = 0
                 adj_matrix[i*4+j+4][i*4+j] = 0
+            else:
+                adj_matrix[i*4+j][i*4+j+4] = 1
+                adj_matrix[i*4+j+4][i*4+j] = 1
 
 def path_gates(adj_matrix, start, finish, gates, opt=True): # opt = optimize gate order
     if gates == []:
+        p = dijkstra(adj_matrix, start, finish)
+        if p is None:
+            return [], []
         return dijkstra(adj_matrix, start, finish), []
 
     best = []
@@ -76,13 +85,24 @@ def path_gates(adj_matrix, start, finish, gates, opt=True): # opt = optimize gat
 
     for perm in perms:
         path = []
-        path += dijkstra(adj_matrix, start, perm[0])
+        p = dijkstra(adj_matrix, start, perm[0])
+        if p is None:
+            return [], []
+        path += p
+        
         del path[-1]
         for i in range(len(perm)-1):
-            path += dijkstra(adj_matrix, perm[i], perm[i+1])
+            p = dijkstra(adj_matrix, perm[i], perm[i+1])
+            if p is None:
+                return [], []
+            path += p
             del path[-1]
-        path += dijkstra(adj_matrix, perm[-1], finish)
-
+        
+        p = dijkstra(adj_matrix, perm[-1], finish)
+        if p is None:
+            return [], []
+        path += p
+        print("yellow")
         if best == [] or pathlen(adj_matrix, path) < pathlen(adj_matrix, best):
             best = path
         elif pathlen(adj_matrix, path) == pathlen(adj_matrix, best):
@@ -176,15 +196,40 @@ while True:
                         if i in gates: gates.remove(i)
                         else: gates.append(i)
                     
-                    if event.button == 1: start = i
-                    if event.button == 3: finish = i
+                    elif event.button == 1: start = i
+                    elif event.button == 3: finish = i
                     
                     block(vblock, hblock)
                     shortest_path, alt = path_gates(adj_matrix, start, finish, gates)
                     print(f"The shortest path from node {start} to node {finish} is {shortest_path} with len {pathlen(adj_matrix, shortest_path)}")
                     print(f"Alternate paths: {alt}")
                     screen.fill(c["white"])
+                    break
             # TODO toggle blocks and stuff
+            for i in range(len(vblock)):
+                for j in range(len(vblock[0])):
+                    if 190+100*j <= mx <= 210+100*j and 100+100*i <= my <= 200+100*i:
+                        if event.button == 2 or shift:
+                            vblock[i][j] = 1-vblock[i][j]
+                            print(vblock)
+                            block(vblock, hblock)
+                            shortest_path, alt = path_gates(adj_matrix, start, finish, gates)
+                            print(f"The shortest path from node {start} to node {finish} is {shortest_path} with len {pathlen(adj_matrix, shortest_path)}")
+                            print(f"Alternate paths: {alt}")
+                            screen.fill(c["white"])
+                            break
+            for i in range(len(hblock)):
+                for j in range(len(hblock[0])):
+                    if 100+100*j <= mx <= 200+100*j and 190+100*i <= my <= 210+100*i:
+                        if event.button == 2 or shift:
+                            hblock[i][j] = 1-hblock[i][j]
+                            print(hblock)
+                            block(vblock, hblock)
+                            shortest_path, alt = path_gates(adj_matrix, start, finish, gates)
+                            print(f"The shortest path from node {start} to node {finish} is {shortest_path} with len {pathlen(adj_matrix, shortest_path)}")
+                            print(f"Alternate paths: {alt}")
+                            screen.fill(c["white"])
+                            break
     
     screen.fill(c["white"])
 
@@ -218,7 +263,8 @@ while True:
                 pygame.draw.line(screen, c["brown"], (100*j+100+5, 100*i+200), (100*j+200-5, 100*i+200), 10)
     
     # draw path
-    pygame.draw.lines(screen, c["red"], False, [nc[i] for i in shortest_path], 3)
+    if shortest_path:
+        pygame.draw.lines(screen, c["red"], False, [nc[i] for i in shortest_path], 3)
 
     # draw alternate paths
     if show_alt:
