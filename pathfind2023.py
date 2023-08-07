@@ -102,7 +102,7 @@ def path_gates(adj_matrix, start, finish, gates, opt=True): # opt = optimize gat
         if p is None:
             return [], []
         path += p
-        print("yellow")
+        # print("yellow") why is this here???
         if best == [] or pathlen(adj_matrix, path) < pathlen(adj_matrix, best):
             best = path
         elif pathlen(adj_matrix, path) == pathlen(adj_matrix, best):
@@ -115,7 +115,7 @@ def path_gates(adj_matrix, start, finish, gates, opt=True): # opt = optimize gat
     return best, alt
 
 def pathlen(adj, path):
-    return 50*len(path)-1 + 25
+    return 50*(len(path)-1) + 25
 
 adj_matrix = [
     [0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
